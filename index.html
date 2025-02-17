@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interfaz de Prueba</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interfaz de Prueba para la API</h1>
+
+    <!-- Formulario para crear un usuario -->
+    <h2>Crear Usuario</h2>
+    <form id="create-form">
+        <input type="text" id="nombre" placeholder="Nombre" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <button type="submit">Crear</button>
+    </form>
+
+    <!-- Lista de usuarios -->
+    <h2>Lista de Usuarios</h2>
+    <table id="usuarios-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Los usuarios se cargarán aquí dinámicamente -->
+        </tbody>
+    </table>
+
+    <script>
+        const apiUrl = '/usuarios';
+
+        // Función para cargar los usuarios
+        async function cargarUsuarios() {
+            const response = await fetch(apiUrl);
+            const usuarios = await response.json();
+            const tbody = document.querySelector('#usuarios-table tbody');
+            tbody.innerHTML = ''; // Limpiar la tabla
+
+            usuarios.forEach(usuario => {
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>${usuario.id}</td>
+                    <td>${usuario.nombre}</td>
+                    <td>${usuario.email}</td>
+                    <td>
+                        <button onclick="editarUsuario(${usuario.id}, '${usuario.nombre}', '${usuario.email}')">Editar</button>
+                        <button onclick="eliminarUsuario(${usuario.id})">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Función para crear un usuario
+        document.getElementById('create-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre').value;
+            const email = document.getElementById('email').value;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, email })
+            });
+
+            if (response.ok) {
+                alert('Usuario creado exitosamente');
+                cargarUsuarios(); // Recargar la lista de usuarios
+                document.getElementById('create-form').reset();
+            } else {
+                alert('Error al crear el usuario');
+            }
+        });
+
+        // Función para eliminar un usuario
+        async function eliminarUsuario(id) {
+            const confirmacion = confirm('¿Estás seguro de eliminar este usuario?');
+            if (!confirmacion) return;
+
+            const response = await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                alert('Usuario eliminado exitosamente');
+                cargarUsuarios(); // Recargar la lista de usuarios
+            } else {
+                alert('Error al eliminar el usuario');
+            }
+        }
+
+        // Función para editar un usuario
+        async function editarUsuario(id, nombre, email) {
+            const nuevoNombre = prompt('Nuevo nombre:', nombre);
+            const nuevoEmail = prompt('Nuevo email:', email);
+
+            const response = await fetch(`${apiUrl}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre: nuevoNombre, email: nuevoEmail })
+            });
+
+            if (response.ok) {
+                alert('Usuario actualizado exitosamente');
+                cargarUsuarios(); // Recargar la lista de usuarios
+            } else {
+                alert('Error al actualizar el usuario');
+            }
+        }
+
+        // Cargar usuarios al iniciar la página
+        cargarUsuarios();
+    </script>
+</body>
+</html>
